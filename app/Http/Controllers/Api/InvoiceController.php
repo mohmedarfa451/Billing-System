@@ -3,18 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\invoice;
+use App\Models\Invoice;
 use DB;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // بدل Invoice::all()، هنجيب فواتير اليوزر ده بس
+        // مع عمل Eager Loading للعميل (customer) عشان البيانات تظهر كاملة
+        $invoices = $request->user()->invoices()->with('customer')->get();
+
+        if ($invoices->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'لا يوجد فواتير مسجلة لهذا المستخدم حتى الآن',
+                'data' => []
+            ]);
+        }
+
         return response()->json([
-            'message' => 'Invoices retrieved successfully',
-            'invoices' => invoice::with('customer', 'items')->get()
-        ], 200);
+            'status' => true,
+            'message' => 'تم جلب فواتيرك بنجاح',
+            'data' => $invoices
+        ]);
     }
 
     public function store(Request $request)
@@ -32,11 +45,11 @@ class InvoiceController extends Controller
         ]);
 
         try {
-
-            return DB::transaction(function () use ($validatedData) {
+            return DB::transaction(function () use ($validatedData, $request) {
 
                 $invoiceData = collect($validatedData)->except('items')->toArray();
-                $invoice = invoice::create($invoiceData);
+
+                $invoice = $request->user()->invoices()->create($invoiceData);
 
                 $invoice->items()->createMany($validatedData['items']);
 
@@ -51,19 +64,30 @@ class InvoiceController extends Controller
             ], 500);
         }
     }
-    public function show($id)
+    public function show($id, Request $request)
     {
-        $invoice = invoice::find($id);
+        // بنجيب الفاتورة بشرط إنها تكون بتاعة اليوزر اللي عامل Login حالياً
+        // وبنعمل Eager Loading للعميل وللأصناف ومعاها بيانات المنتجات كمان!
+        $invoice = $request->user()->invoices()
+            ->with(['customer', 'items.product'])
+            ->find($id);
 
         if (!$invoice) {
-            return response()->json(['message' => 'Invoice not found'], 404);
+            return response()->json([
+                'status' => false,
+                'message' => 'عفواً، الفاتورة غير موجودة أو غير مصرح لك بعرضها'
+            ], 404);
         }
 
-        return response()->json($invoice, 200);
+        return response()->json([
+            'status' => true,
+            'message' => 'تم جلب تفاصيل الفاتورة بنجاح',
+            'data' => $invoice
+        ]);
     }
     public function update(Request $request, $id)
     {
-        $invoice = invoice::find($id);
+        $invoice = Invoice::find($id);
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);
@@ -81,7 +105,7 @@ class InvoiceController extends Controller
     }
     public function destroy($id)
     {
-        $invoice = invoice::find($id);
+        $invoice = Invoice::find($id);
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);

@@ -70,7 +70,12 @@ class AuthController extends Controller
     // تسجيل الخروج (مسح التوكن)
     public function logout(Request $request)
     {
+        // بنجيب التوكن اللي اليوزر داخل بيه حالياً ونمسحه
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'تم تسجيل الخروج بنجاح']);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'تم تسجيل الخروج بنجاح وتم إبطال التوكن'
+        ], 200);
     }
 }
