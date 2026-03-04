@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\invoice;
+use DB;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -15,6 +16,7 @@ class InvoiceController extends Controller
             'invoices' => invoice::with('customer', 'items')->get()
         ], 200);
     }
+
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -29,10 +31,25 @@ class InvoiceController extends Controller
             'status' => 'required|string',
         ]);
 
-        $invoiceData = collect($validatedData)->except('items')->toArray();
-        $invoice = invoice::create($invoiceData);
-        $invoice->items()->createMany($validatedData['items']);
-        return $this->success($invoice, 'تم إضافة الفاتورة بنجاح');
+        try {
+
+            return DB::transaction(function () use ($validatedData) {
+
+                $invoiceData = collect($validatedData)->except('items')->toArray();
+                $invoice = invoice::create($invoiceData);
+
+                $invoice->items()->createMany($validatedData['items']);
+
+                return $this->success($invoice, 'تم إضافة الفاتورة والأصناف بنجاح');
+            });
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'حدث خطأ أثناء حفظ البيانات، تم إلغاء العملية',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
     public function show($id)
     {
