@@ -15,7 +15,7 @@ class Invoice extends Model
         'total_amount',
         'status',
     ];
-    
+
 
     public function customer()
     {
@@ -27,4 +27,8 @@ class Invoice extends Model
         return $this->hasMany(InvoiceItem::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

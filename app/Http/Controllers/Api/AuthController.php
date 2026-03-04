@@ -30,7 +30,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'تم تسجيل الحساب بنجاح',
+                'message' => 'Account registered successfully',
                 'access_token' => $token,
             ], 201);
 
@@ -38,7 +38,7 @@ class AuthController extends Controller
             // هنا بنمسك غلطة الإيميل المتكرر ونرجعها بمزاجنا
             return response()->json([
                 'status' => false,
-                'message' => 'عفواً، هذا الإيميل مسجل لدينا بالفعل',
+                'message' => 'Sorry, this email is already registered',
                 'errors' => $e->errors(),
             ], 422);
         }
@@ -51,7 +51,7 @@ class AuthController extends Controller
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'status' => false,
-                'message' => 'بيانات الدخول غير صحيحة'
+                'message' => 'Invalid login credentials'
             ], 401);
         }
 
@@ -60,7 +60,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'تم تسجيل الدخول بنجاح',
+            'message' => 'Login successful',
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
@@ -75,7 +75,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'تم تسجيل الخروج بنجاح وتم إبطال التوكن'
+            'message' => 'Logged out successfully and token revoked'
         ], 200);
     }
 }

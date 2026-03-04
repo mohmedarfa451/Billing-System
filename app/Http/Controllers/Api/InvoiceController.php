@@ -18,14 +18,14 @@ class InvoiceController extends Controller
         if ($invoices->isEmpty()) {
             return response()->json([
                 'status' => true,
-                'message' => 'لا يوجد فواتير مسجلة لهذا المستخدم حتى الآن',
+                'message' => 'No invoices recorded for this user yet',
                 'data' => []
             ]);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'تم جلب فواتيرك بنجاح',
+            'message' => 'Invoices retrieved successfully',
             'data' => $invoices
         ]);
     }
@@ -53,35 +53,34 @@ class InvoiceController extends Controller
 
                 $invoice->items()->createMany($validatedData['items']);
 
-                return $this->success($invoice, 'تم إضافة الفاتورة والأصناف بنجاح');
+                return $this->success($invoice, 'Invoice and items added successfully');
             });
 
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'حدث خطأ أثناء حفظ البيانات، تم إلغاء العملية',
+                'message' => 'An error occurred while saving data, the process was cancelled',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
     public function show($id, Request $request)
     {
-        // بنجيب الفاتورة بشرط إنها تكون بتاعة اليوزر اللي عامل Login حالياً
-        // وبنعمل Eager Loading للعميل وللأصناف ومعاها بيانات المنتجات كمان!
         $invoice = $request->user()->invoices()
+
             ->with(['customer', 'items.product'])
             ->find($id);
 
         if (!$invoice) {
             return response()->json([
                 'status' => false,
-                'message' => 'عفواً، الفاتورة غير موجودة أو غير مصرح لك بعرضها'
+                'message' => 'Sorry, the invoice was not found or you are not authorized to view it'
             ], 404);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'تم جلب تفاصيل الفاتورة بنجاح',
+            'message' => 'Invoice details retrieved successfully',
             'data' => $invoice
         ]);
     }
@@ -101,7 +100,7 @@ class InvoiceController extends Controller
         ]);
 
         $invoice->update($validatedData);
-        return $this->success($invoice, 'تم تحديث الفاتورة بنجاح');
+        return $this->success($invoice, 'Invoice updated successfully');
     }
     public function destroy($id)
     {
