@@ -19,7 +19,6 @@ class InvoiceItem extends Model
         return $this->belongsTo(Invoice::class);
     }
 
-    // العنصر يشير لمنتج
     public function product()
     {
         return $this->belongsTo(Product::class);
