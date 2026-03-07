@@ -6,13 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use DB;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        // بدل Invoice::all()، هنجيب فواتير اليوزر ده بس
-        // مع عمل Eager Loading للعميل (customer) عشان البيانات تظهر كاملة
         $invoices = $request->user()->invoices()->with('customer')->get();
 
         if ($invoices->isEmpty()) {
@@ -113,5 +112,16 @@ class InvoiceController extends Controller
         $invoice->delete();
 
         return response()->json(['message' => 'Invoice deleted successfully'], 200);
+    }
+    public function downloadPDF($id)
+    {
+        // 2. بنجيب بيانات الفاتورة مع العميل والأصناف (Eager Loading) عشان منعملش لود ع الداتا بيز
+        $invoice = Invoice::with(['customer', 'items'])->findOrFail($id);
+
+        // 3. بنبعت البيانات دي لملف "رسم" (View) لسه هنكرتيه
+        $pdf = Pdf::loadView('pdf.invoice_template', compact('invoice'));
+
+        // 4. بنقول للسيرفر نزل الملف ده للكمبيوتر باسم فاتورة ورقمها
+        return $pdf->download('invoice-' . $id . '.pdf');
     }
 }

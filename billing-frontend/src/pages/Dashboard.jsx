@@ -29,6 +29,28 @@ const Dashboard = () => {
         }
     };
 
+    // --- ميثود تحميل الـ PDF الجديدة ---
+    const handleDownload = async (invoiceId) => {
+        try {
+            // طلب الملف من الـ API بنوع blob
+            const response = await api.get(`/invoices/${invoiceId}/download`, {
+                responseType: 'blob', 
+            });
+
+            // تحويل البيانات لرابط تحميل
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `invoice-${invoiceId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error("فشل تحميل الفاتورة:", error);
+            alert("حدث خطأ أثناء تحميل الملف. تأكد من إعدادات السيرفر.");
+        }
+    };
+
     const handleViewInvoice = async (id) => {
         try {
             const response = await api.get(`/invoices/${id}`);
@@ -210,7 +232,16 @@ const Dashboard = () => {
                                         </span>
                                     </td>
                                     <td>
-                                        <button onClick={() => handleDelete(invoice.id)} className="btn-action-delete">Delete</button>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            {/* زرار التحميل المدمج */}
+                                            <button 
+                                                onClick={() => handleDownload(invoice.id)} 
+                                                className="btn-download-small"
+                                            >
+                                                PDF 📥
+                                            </button>
+                                            <button onClick={() => handleDelete(invoice.id)} className="btn-action-delete">Delete</button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -257,6 +288,13 @@ const Dashboard = () => {
                                 </tbody>
                             </table>
                             <div className="modal-footer">
+                                <button 
+                                    onClick={() => handleDownload(selectedInvoice.id)} 
+                                    className="btn-primary" 
+                                    style={{marginRight: '10px'}}
+                                >
+                                    Download PDF
+                                </button>
                                 <div className="grand-total">Grand Total: <span>${selectedInvoice.total_amount}</span></div>
                             </div>
                         </div>
@@ -265,183 +303,27 @@ const Dashboard = () => {
             )}
 
             <style>{`
-                .dashboard-container {
-                    min-height: 100vh;
-                    background-color: var(--background);
-                }
-                .dashboard-header {
-                    background: white;
-                    padding: 1rem 2rem;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    border-bottom: 1px solid var(--border);
-                    box-shadow: var(--shadow-sm);
-                }
-                .brand-name {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: var(--primary);
-                }
-                .dashboard-content {
-                    max-width: 1200px;
-                    margin: 2rem auto;
-                    padding: 0 1rem;
-                }
-                .content-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 2rem;
-                }
-                .table-card {
-                    padding: 0;
-                    overflow: hidden;
-                }
-                .invoices-table {
-                    border: none;
-                }
-                .invoice-id {
-                    color: var(--primary);
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-                .invoice-id:hover {
-                    text-decoration: underline;
-                }
-                .amount {
-                    font-weight: 500;
-                }
-                .empty-state {
-                    text-align: center;
-                    padding: 3rem;
-                    color: var(--text-muted);
-                }
-                .form-card {
-                    margin-bottom: 2rem;
-                    border-top: 4px solid var(--primary);
-                }
-                .form-card h3 {
-                    margin-bottom: 1.5rem;
-                }
-                .form-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 1.5rem;
-                    margin-bottom: 2rem;
-                }
-                .items-section {
-                    margin-top: 2rem;
-                    padding-top: 2rem;
-                    border-top: 1px solid var(--border);
-                }
-                .items-section h4 {
-                    margin-bottom: 1rem;
-                }
-                .item-row {
-                    display: grid;
-                    grid-template-columns: 3fr 1fr 1fr 1.5fr auto;
-                    gap: 1rem;
-                    margin-bottom: 0.75rem;
-                    align-items: center;
-                }
-                .item-subtotal {
-                    background: #f1f5f9;
-                    padding: 0.75rem;
-                    border-radius: var(--radius);
-                    text-align: center;
-                    font-weight: 600;
-                    font-size: 0.875rem;
-                }
-                .btn-remove {
-                    background: none;
-                    color: var(--danger);
-                    font-size: 1.5rem;
-                    padding: 0.25rem 0.5rem;
-                }
-                .btn-secondary {
-                    background: #f1f5f9;
-                    color: var(--secondary);
-                    padding: 0.5rem 1rem;
-                    margin-top: 0.5rem;
-                }
-                .form-footer {
-                    margin-top: 2rem;
-                    padding-top: 1.5rem;
-                    border-top: 1px solid var(--border);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .total-badge {
-                    font-size: 1.125rem;
-                    font-weight: 500;
-                }
-                .total-badge span {
-                    color: var(--primary);
-                    font-weight: 700;
-                    font-size: 1.25rem;
-                }
-                .btn-action-delete {
-                    color: var(--danger);
-                    background: none;
-                    font-size: 0.875rem;
-                    padding: 0.25rem 0.5rem;
-                }
-                .btn-action-delete:hover {
-                    background: #fee2e2;
-                }
-                /* Modal Detail Styles */
-                .modal-header {
-                    padding: 1.5rem;
-                    border-bottom: 1px solid var(--border);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .btn-close {
-                    background: none;
-                    font-size: 1.5rem;
-                    color: var(--text-muted);
-                }
-                .modal-body {
-                    padding: 1.5rem;
-                }
-                .detail-meta {
-                    display: flex;
-                    gap: 2rem;
-                    margin-bottom: 2rem;
-                }
-                .modal-footer {
-                    margin-top: 2rem;
-                    text-align: right;
-                }
-                .grand-total {
-                    font-size: 1.25rem;
-                }
-                .grand-total span {
-                    color: var(--primary);
-                    font-weight: 700;
-                }
-                .loading-state {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    gap: 1rem;
-                }
-                .spinner {
-                    width: 40px;
-                    height: 40px;
-                    border: 4px solid var(--border);
-                    border-top-color: var(--primary);
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
+                .dashboard-container { min-height: 100vh; background-color: #f8fafc; }
+                .dashboard-header { background: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+                .brand-name { font-size: 1.25rem; font-weight: 700; color: #2563eb; }
+                .dashboard-content { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+                .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+                .btn-download-small { background: white; border: 1px solid #2563eb; color: #2563eb; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+                .btn-download-small:hover { background: #2563eb; color: white; transition: 0.3s; }
+                .table-card { background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; }
+                .invoices-table { width: 100%; border-collapse: collapse; text-align: left; }
+                .invoices-table th { background: #f1f5f9; padding: 12px; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+                .invoices-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+                .badge { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; cursor: pointer; }
+                .badge-pending { background: #fef3c7; color: #92400e; }
+                .badge-paid { background: #dcfce7; color: #166534; }
+                .btn-primary { background: #2563eb; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; }
+                .btn-danger { background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; }
+                .invoice-id { color: #2563eb; cursor: pointer; font-weight: 600; }
+                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+                .modal-content { background: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 800px; }
+                .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+                @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
         </div>
     );
