@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class invoiceItem extends Model
+class InvoiceItem extends Model
 {
     protected $table = "invoice_items";
     protected $fillable = [
@@ -19,7 +19,6 @@ class invoiceItem extends Model
         return $this->belongsTo(Invoice::class);
     }
 
-    // العنصر يشير لمنتج
     public function product()
     {
         return $this->belongsTo(Product::class);

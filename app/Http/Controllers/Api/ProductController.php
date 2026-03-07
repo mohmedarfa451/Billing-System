@@ -24,7 +24,7 @@ class ProductController extends Controller
         ]);
 
         $product = Product::create($validated);
-        return $this->success($product, 'تم إضافة المنتج بنجاح');
+        return $this->success($product, 'Product added successfully');
     }
     public function show($id)
     {
